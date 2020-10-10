@@ -1,10 +1,12 @@
-export type TProps = { [key: string]: unknown };
-export type TNode = { type: string; props: TProps } | string;
+export type TIncProps = { [key: string]: unknown; children?: TChild[] };
+export type TProps = { [key: string]: unknown; children: TNode[] };
+export type TNode = { type: string; props: TProps };
+export type TChild = TNode | string;
 
 function createElement(
   type: string,
-  props: TProps = {},
-  ...children: TNode[]
+  props: TIncProps = {},
+  ...children: TChild[]
 ): TNode {
   return {
     type,
@@ -25,6 +27,27 @@ function createTextElement(text: string): TNode {
       children: [],
     },
   };
+}
+
+function render(element: TNode, container: HTMLElement) {
+  const dom =
+    element.type == "TEXT_ELEMENT"
+      ? document.createTextNode("")
+      : document.createElement(element.type);
+
+  const isProperty = (key) => key !== "children";
+  Object.keys(element.props)
+    .filter(isProperty)
+    .forEach((name) => {
+      dom[name] = element.props[name];
+    });
+
+  for (const child of element.props.children) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    render(child, dom);
+  }
+
+  container.appendChild(dom);
 }
 
 export default {
