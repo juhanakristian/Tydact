@@ -2,7 +2,11 @@ const webpack = require('webpack')
 const path = require('path')
 
 const config = {
-  include: [path.resolve(__dirname, '../dist')],
+  resolve: {
+    alias: {
+      tydact: path.resolve(__dirname, '../dist/tydact.js'),
+    },
+  },
   entry: './src/App.jsx',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -21,7 +25,7 @@ const config = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env'],
+            presets: ['@babel/preset-env', '@babel/preset-react'],
           },
         },
       },

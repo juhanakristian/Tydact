@@ -59,7 +59,8 @@ interface Fiber {
   effectTag?: string
 }
 
-function createDom(fiber) {
+function createDom(fiber: Fiber) {
+  console.log(fiber.type)
   const dom =
     fiber.type == 'TEXT_ELEMENT'
       ? document.createTextNode('')

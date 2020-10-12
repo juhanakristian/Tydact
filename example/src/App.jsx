@@ -1,8 +1,8 @@
-import Tydact from './tydact'
+import Tydact from 'tydact'
 
 /**@jsx Tydact.createElement */
 function App(props) {
-  return <h1>Hi {props.name}</h1>
+  return <div>Hi {props.name}</div>
 }
 
 const element = <App name="foo" />
