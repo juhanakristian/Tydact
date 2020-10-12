@@ -4,6 +4,7 @@
   "description": "Build your own react",
   "main": "byor.js",
   "scripts": {
+    "build": "tsc",
     "test": "jest ."
   },
   "author": "Juhana Jauhiainen",

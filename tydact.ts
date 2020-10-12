@@ -143,6 +143,7 @@ function commitWork(fiber: Fiber) {
 
 function reconcileChildren(wipFiber: Fiber, elements) {
   let index = 0
+  let prevSibling: Fiber = null
   let oldFiber = wipFiber.alternate && wipFiber.alternate.child
 
   while (index < elements.length || oldFiber != null) {
@@ -182,11 +183,18 @@ function reconcileChildren(wipFiber: Fiber, elements) {
       oldFiber = oldFiber.sibling
     }
 
+    if (index === 0) {
+      wipFiber.child = newFiber
+    } else {
+      prevSibling.sibling = newFiber
+    }
+
+    prevSibling = newFiber
     index++
   }
 }
 
-function render(element: TNode, container: HTMLElement | Text) {
+function render(element: TNode, container: HTMLElement | Text): void {
   wipRoot = {
     dom: container,
     props: {
@@ -245,4 +253,5 @@ function performUnitOfWork(fiber: Fiber) {
 
 export default {
   createElement,
+  render,
 }
