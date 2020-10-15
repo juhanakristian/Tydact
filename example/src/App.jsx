@@ -6,5 +6,7 @@ function App(props) {
 }
 
 const element = <App name="foo" />
+// eslint-disable-next-line no-undef
 const container = document.getElementById('root')
+console.log({document})
 Tydact.render(element, container)

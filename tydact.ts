@@ -49,7 +49,7 @@ function createTextElement(text: string): TNode {
 }
 
 interface Fiber {
-  type?: string
+  type?: string | ((any) => any)
   dom: HTMLElement | Text
   props: TProps
   alternate?: Fiber
@@ -61,6 +61,8 @@ interface Fiber {
 
 function createDom(fiber: Fiber) {
   console.log(fiber.type)
+  if (typeof fiber.type === 'function') return
+
   const dom =
     fiber.type == 'TEXT_ELEMENT'
       ? document.createTextNode('')
@@ -125,17 +127,30 @@ function commitRoot() {
   wipRoot = null
 }
 
+function commitDeletion(fiber: Fiber, domParent) {
+  if (fiber.dom) {
+    domParent.removeChild(fiber.dom)
+  } else {
+    commitDeletion(fiber.child, domParent)
+  }
+}
+
 function commitWork(fiber: Fiber) {
   if (!fiber) return
 
-  const domParent = fiber.parent.dom
+  let domParentFiber = fiber.parent
+  while (!domParentFiber.dom) {
+    domParentFiber = domParentFiber.parent
+  }
+
+  const domParent = domParentFiber.dom
 
   if (fiber.effectTag === 'PLACEMENT' && fiber.dom != null) {
     domParent.appendChild(fiber.dom)
   } else if (fiber.effectTag === 'UPDATE' && fiber.dom != null) {
     updateDom(fiber.dom, fiber.alternate.props, fiber.props)
   } else if (fiber.effectTag === 'DELETION' && fiber.dom != null) {
-    domParent.removeChild(fiber.dom)
+    commitDeletion(fiber, domParent)
   }
 
   commitWork(fiber.child)
@@ -196,6 +211,8 @@ function reconcileChildren(wipFiber: Fiber, elements) {
 }
 
 function render(element: TNode, container: HTMLElement | Text): void {
+  console.log({element})
+  console.log({container})
   wipRoot = {
     dom: container,
     props: {
@@ -231,12 +248,14 @@ function workLoop(deadline) {
 // ts-ignore
 window.requestIdleCallback(workLoop)
 function performUnitOfWork(fiber: Fiber) {
-  if (!fiber.dom) {
-    fiber.dom = createDom(fiber)
-  }
+  console.log({fiber})
+  const isFunctionComponent = typeof fiber.type === 'function'
 
-  const elements = fiber.props.children
-  reconcileChildren(fiber, elements)
+  if (isFunctionComponent) {
+    updateFunctionComponent(fiber)
+  } else {
+    updateHostComponent(fiber)
+  }
 
   if (fiber.child) {
     return fiber.child
@@ -250,6 +269,21 @@ function performUnitOfWork(fiber: Fiber) {
 
     nextFiber = nextFiber.parent
   }
+}
+
+function updateFunctionComponent(fiber: Fiber) {
+  if (typeof fiber.type !== 'function') return
+
+  const children = [fiber.type(fiber.props)]
+  reconcileChildren(fiber, children)
+}
+
+function updateHostComponent(fiber: Fiber) {
+  if (!fiber.dom) {
+    fiber.dom = createDom(fiber)
+  }
+
+  reconcileChildren(fiber, fiber.props.children)
 }
 
 export default {
