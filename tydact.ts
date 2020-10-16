@@ -278,6 +278,8 @@ function updateFunctionComponent(fiber: Fiber) {
   reconcileChildren(fiber, children)
 }
 
+function useState(initial) {}
+
 function updateHostComponent(fiber: Fiber) {
   if (!fiber.dom) {
     fiber.dom = createDom(fiber)

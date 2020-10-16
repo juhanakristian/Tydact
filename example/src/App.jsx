@@ -1,12 +1,12 @@
 import Tydact from 'tydact'
 
 /**@jsx Tydact.createElement */
-function App(props) {
-  return <div>Hi {props.name}</div>
+function Counter() {
+  const [state, setState] = Tydact.useState(1)
+  return <h1 onClick={() => setState(c => c + 1)}>Count: {state}</h1>
 }
 
-const element = <App name="foo" />
+const element = <Counter />
 // eslint-disable-next-line no-undef
 const container = document.getElementById('root')
-console.log({document})
 Tydact.render(element, container)
