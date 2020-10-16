@@ -48,6 +48,10 @@ function createTextElement(text: string): TNode {
   }
 }
 
+interface Hook {
+  state: any
+}
+
 interface Fiber {
   type?: string | ((any) => any)
   dom: HTMLElement | Text
@@ -57,6 +61,7 @@ interface Fiber {
   sibling?: Fiber
   child?: Fiber
   effectTag?: string
+  hooks?: Hook[]
 }
 
 function createDom(fiber: Fiber) {
@@ -271,14 +276,47 @@ function performUnitOfWork(fiber: Fiber) {
   }
 }
 
+let wipFiber: Fiber = null
+let hookIndex = null
+
 function updateFunctionComponent(fiber: Fiber) {
   if (typeof fiber.type !== 'function') return
+  wipFiber = fiber
+  hookIndex = 0
+  wipFiber.hooks = []
 
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
 }
 
-function useState(initial) {}
+function useState(initial) {
+  const oldHook =
+    wipFiber.alternate &&
+    wipFiber.alternate.hooks &&
+    wipFiber.alternate.hooks[hookIndex]
+
+  const hook = {
+    state: oldHook ? oldHook.state : initial,
+    queue: [],
+  }
+
+  const setState = action => {
+    hook.queue.push(action)
+    wipRoot = {
+      dom: currentRoot.dom,
+      props: currentRoot.props,
+      alternate: currentRoot,
+    }
+
+    nextUnitOfWork = wipRoot
+    deletions = []
+  }
+
+  wipFiber.hooks.push(hook)
+  hookIndex++
+
+  return [hook.state, setState]
+}
 
 function updateHostComponent(fiber: Fiber) {
   if (!fiber.dom) {
