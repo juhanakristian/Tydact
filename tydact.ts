@@ -49,6 +49,7 @@ function createTextElement(text: string): TNode {
 }
 
 interface Hook {
+  queue: any
   state: any
 }
 
@@ -65,7 +66,6 @@ interface Fiber {
 }
 
 function createDom(fiber: Fiber) {
-  console.log(fiber.type)
   if (typeof fiber.type === 'function') return
 
   const dom =
@@ -73,12 +73,7 @@ function createDom(fiber: Fiber) {
       ? document.createTextNode('')
       : document.createElement(fiber.type)
 
-  const isProperty = key => key !== 'children'
-  Object.keys(fiber.props)
-    .filter(isProperty)
-    .forEach(name => {
-      dom[name] = fiber.props[name]
-    })
+  updateDom(dom, {}, fiber.props)
 
   return dom
 }
@@ -104,7 +99,6 @@ function updateDom(dom, prevProps, nextProps) {
     .filter(isNew(prevProps, nextProps))
     .forEach(name => {
       const eventType = name.toLowerCase().substring(2)
-
       dom.addEventListener(eventType, nextProps[name])
     })
 
@@ -216,8 +210,6 @@ function reconcileChildren(wipFiber: Fiber, elements) {
 }
 
 function render(element: TNode, container: HTMLElement | Text): void {
-  console.log({element})
-  console.log({container})
   wipRoot = {
     dom: container,
     props: {
@@ -253,7 +245,6 @@ function workLoop(deadline) {
 // ts-ignore
 window.requestIdleCallback(workLoop)
 function performUnitOfWork(fiber: Fiber) {
-  console.log({fiber})
   const isFunctionComponent = typeof fiber.type === 'function'
 
   if (isFunctionComponent) {
@@ -300,6 +291,11 @@ function useState(initial) {
     queue: [],
   }
 
+  const actions = oldHook ? oldHook.queue : []
+  actions.forEach(action => {
+    hook.state = action(hook.state)
+  })
+
   const setState = action => {
     hook.queue.push(action)
     wipRoot = {
@@ -329,4 +325,5 @@ function updateHostComponent(fiber: Fiber) {
 export default {
   createElement,
   render,
+  useState,
 }
